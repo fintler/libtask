@@ -175,6 +175,25 @@ int		netdial(int, char*, int);
 int		netlookup(char*, uint32_t*);	/* blocks entire program! */
 int		netdial(int, char*, int);
 
+/*
+ * Timer
+ */
+typedef struct  Timer Timer;
+
+struct Timer
+{
+    int     dt;
+    int     cancel;
+    Channel *c; /* chan(int) */
+    Timer   *next;
+};
+
+void timerstop(Timer *t);
+void timercancel(Timer *t);
+void timertask(void *v);
+void timerinit(void);
+Timer* timerstart(int dt);
+
 #ifdef __cplusplus
 }
 #endif

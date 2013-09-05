@@ -12,7 +12,7 @@ OFILES=\
 	qlock.o\
 	rendez.o\
 	task.o\
-        timer.o\
+	timer.o\
 
 all: $(LIB) primes tcpproxy testdelay
 

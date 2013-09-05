@@ -188,10 +188,9 @@ struct Timer
     Timer   *next;
 };
 
-static uint msec(void);
 void timerstop(Timer *t);
 void timercancel(Timer *t);
-static void timerproc(void *v);
+void timertask(void *v);
 void timerinit(void);
 Timer* timerstart(int dt);
 

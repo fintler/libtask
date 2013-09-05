@@ -1,10 +1,12 @@
 #include "taskimpl.h"
 
+extern uvlong nsec(void);
+
 static Channel* ctimer; /* chan(Timer*)[100] */
 static Timer *timer;
 
 static
-uint
+uint32_t
 msec(void)
 {
     return nsec()/1000000;
@@ -23,7 +25,6 @@ timercancel(Timer *t)
     t->cancel = 1;
 }
 
-static
 void
 timertask(void *v)
 {
@@ -31,8 +32,7 @@ timertask(void *v)
     Timer **t, *x;
     uint old, new;
 
-    USED(v);
-    threadsetname("timertask");
+    taskname("timertask");
     t = nil;
     na = 0;
     nt = 0;
@@ -56,7 +56,7 @@ timertask(void *v)
                  * avoid possible deadlock if client is
                  * now sending on ctimer
                  */
-                if(nbsendul(x->c, 0) > 0)
+                if(channbsendul(x->c, 0) > 0)
                     del = 1;
             }
             if(del){
@@ -66,18 +66,19 @@ timertask(void *v)
             }
         }
         if(nt == 0){
-            x = recvp(ctimer);
+            x = chanrecvp(ctimer);
     gotit:
             if(nt == na){
                 na += 10;
                 t = realloc(t, na*sizeof(Timer*));
                 if(t == nil)
-                    error("timer realloc failed");
+                    fprint(2, "timer realloc failed");
+                    return;
             }
             t[nt++] = x;
             old = msec();
         }
-        if(nbrecv(ctimer, &x) > 0)
+        if(channbrecv(ctimer, &x) > 0)
             goto gotit;
     }
 }
@@ -86,7 +87,6 @@ void
 timerinit(void)
 {
     ctimer = chancreate(sizeof(Timer*), 100);
-    chansetname(ctimer, "ctimer");
     taskcreate(timertask, nil, STACK);
 }
 
@@ -99,13 +99,12 @@ timerstart(int dt)
     if(t)
         timer = timer->next;
     else{
-        t = emalloc(sizeof(Timer));
+        t = calloc(sizeof(Timer), 1);
         t->c = chancreate(sizeof(int), 0);
-        chansetname(t->c, "tc%p", t->c);
     }
     t->next = nil;
     t->dt = dt;
     t->cancel = 0;
-    sendp(ctimer, t);
+    chansendp(ctimer, t);
     return t;
 }
